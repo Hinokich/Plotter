@@ -18,6 +18,8 @@ QThread* writerThread = new QThread();
 Porthandler* handler = new Porthandler(&values);
 Datawriter* dataWriter = new Datawriter();
 
+
+
 QSerialPortInfo portInfo;
 QTimer axisTimer;
 QTime globalTime(QTime::currentTime());
@@ -52,6 +54,8 @@ MainWindow::MainWindow(QWidget *parent)
     dataWriter->moveToThread(writerThread);
     connect(this, SIGNAL (startListening()), handler, SLOT (process()));
     connect(handler, SIGNAL(plotDataGet(int)), this, SLOT(setupPlot(int)));
+    connect(snapSave, SIGNAL (activated()), this, SLOT (snapshotSave()));
+    connect(snapCopy, SIGNAL (activated()), this, SLOT (snapshotCopy()));
 
     handlerThread->start();
     writerThread->start();
@@ -122,6 +126,7 @@ void MainWindow::on_pushButton_clicked()
         handler->close();
         ui->pushButton->setText("Connect");
         qDebug() << "Disconnected";
+        ui->label_3->setText("Disconnected");
         axisTimer.stop();
         connected = false;
         dataWriter->stopWriting();
@@ -145,6 +150,8 @@ void MainWindow::on_pushButton_clicked()
                 dataWriter->openFile(namef);
                 isWriting = true;
             }
+        }else{
+            ui->label_3->setText(QString("Error: unable to connect\nto port"+portName));
         }
     }
 }
@@ -194,4 +201,31 @@ void MainWindow::on_checkBox_2_stateChanged(int arg1)
         headerEnabled = false;
     else
         headerEnabled = true;
+}
+
+void MainWindow::on_pushButtonSnap_clicked()
+{
+    QString snap = "data/snapshot_";
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QDate date = dateTime.date();
+    snap = snap + date.toString("ddMMyy") +"_" + dateTime.toUTC().toString("hhmmss") + ".png";
+    bool snapSaved = ui->widget->savePng(snap);
+    qDebug() << "snapSaved:" << snapSaved;
+}
+
+void MainWindow::snapshotCopy(){
+    qDebug() << "snapShotCopy triggered";
+    QPixmap pixmap = ui->widget->toPixmap();
+    QClipboard * clipboard = QApplication::clipboard();
+    clipboard->setPixmap(pixmap);
+}
+
+void MainWindow::snapshotSave(){
+    qDebug() << "snapShotSave triggered";
+    QString snap = "data/snapshot_";
+    QDateTime dateTime = QDateTime::currentDateTime();
+    QDate date = dateTime.date();
+    snap = snap + date.toString("ddMMyy") +"_" + dateTime.toUTC().toString("hhmmss") + ".png";
+    bool snapSaved = ui->widget->savePng(snap);
+    qDebug() << "snapSaved:" << snapSaved;
 }
