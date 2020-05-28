@@ -29,6 +29,7 @@ void Porthandler::process(){
                         values->resize(maxParams);
                         qDebug()<< "Maximum values:" << maxParams;
                         emit plotDataGet(maxParams);
+                        qDebug()<< "emit plotDataGet(maxParams);" << maxParams;
                     }
                 }else{
                     for(int i=0; i<maxParams; i++){

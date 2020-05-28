@@ -11,13 +11,13 @@
 #include <QTimer>
 
 QVector<int> values;
-QVector<QString> colors = {"#0000ff","#ff0000","#6be33b","#fcba03","#3ec9c5","#9242b8","#eb57e3","#ffae00","#688a3e ","#6b6b6b"};
+QVector<QString> colors = {"#0000ff","#ff0000","#6be33b","#fcba03","#3ec9c5","#9242b8","#eb57e3","#ffae00","#688a3e","#6b6b6b"};
 
 QThread* handlerThread = new QThread();
 QThread* writerThread = new QThread();
 Porthandler* handler = new Porthandler(&values);
 Datawriter* dataWriter = new Datawriter();
-
+QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
 
 
 QSerialPortInfo portInfo;
@@ -38,6 +38,7 @@ int xScale = 30;
 bool logsEnabled = false;
 bool headerEnabled = false;
 bool isWriting = false;
+double lastPointKey = 0;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -70,6 +71,7 @@ void MainWindow::plotterSetup(){
     ui->widget->clearPlottables();
     ui->widget->clearItems();
     ui->widget->clearGraphs();
+    qDebug() << "plotterSetup() debug-1";
 
     if(graphsCount>maxGraphs){
         graphsCount = maxGraphs;
@@ -78,21 +80,24 @@ void MainWindow::plotterSetup(){
         ui->widget->addGraph();
         ui->widget->graph(i)->setPen(QPen(QColor(colors.value(i)), 1));
     }
+    qDebug() << "plotterSetup() debug-2";
 
-    QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
+    //QSharedPointer<QCPAxisTickerTime> timeTicker(new QCPAxisTickerTime);
     timeTicker->setTimeFormat("%h:%m:%s");
     ui->widget->xAxis->setTicker(timeTicker);
     ui->widget->axisRect()->setupFullAxesBox();
     ui->widget->yAxis->setRange(yLower, yUpper);
+    qDebug() << "plotterSetup() debug-3";
     connect(&axisTimer, SIGNAL(timeout()), this, SLOT(axisReplot()));
 
     ui->label_3->setText(QString("Plots: " + QString::number(graphsCount)));
+    qDebug() << "plotterSetup() debug-4";
 
 }
 
 void MainWindow::axisReplot(){
     double key = globalTime.elapsed()/1000.0;
-    static double lastPointKey = 0;
+    //static double lastPointKey = 0;
     if(key-lastPointKey > 0.002f){
     for(int i=0; i<graphsCount; i++){
         ui->widget->graph(i)->addData(key, values.value(i));
@@ -101,15 +106,18 @@ void MainWindow::axisReplot(){
     }
     ui->widget->xAxis->setRange(key, xScale, Qt::AlignRight);
     ui->widget->replot();
-
+    /*
     if(isWriting){
         dataWriter->writeDataToFile(&values);
-    }
+    }*/
 
     QString format;
     for(int i=0; i<graphsCount; i++){
         format += QString("<font color=\"" + colors.value(i) + "\">███</font><b> " + QString::number(values.value(i)) + "</b>");
         format += "<br><br>";
+    }
+    if(isWriting){
+        dataWriter->writeDataToFile(&values);
     }
     ui->label_7->setText(format);
 }
@@ -118,6 +126,7 @@ void MainWindow::setupPlot(int foundGraphsCount){
     graphsCount = foundGraphsCount;
     plotterSetup();
     axisTimer.start(replotTime);
+    qDebug() << "setupPlot() proceed...";
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -127,6 +136,7 @@ void MainWindow::on_pushButton_clicked()
         ui->pushButton->setText("Connect");
         qDebug() << "Disconnected";
         ui->label_3->setText("Disconnected");
+
         axisTimer.stop();
         connected = false;
         dataWriter->stopWriting();
@@ -137,6 +147,7 @@ void MainWindow::on_pushButton_clicked()
         handler->setPort(portName);
         handler->setSpeed(portSpeed);
         if(handler->open()){
+
             ui->pushButton->setText("Disconnect");
             qDebug() << "Connected";
             emit startListening();
@@ -150,6 +161,9 @@ void MainWindow::on_pushButton_clicked()
                 dataWriter->openFile(namef);
                 isWriting = true;
             }
+            ui->label_3->setText("Connected");
+            globalTime.restart();
+            lastPointKey = 0;
         }else{
             ui->label_3->setText(QString("Error: unable to connect\nto port"+portName));
         }
