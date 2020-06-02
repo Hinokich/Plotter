@@ -156,7 +156,7 @@ void MainWindow::on_pushButton_clicked()
                 QString namef = "data/report_";
                 QDateTime dateTime = QDateTime::currentDateTime();
                 QDate date = dateTime.date();
-                namef = namef + date.toString("ddMMyy") +"_" + dateTime.toUTC().toString("hhmmss") + ".txt";
+                namef = namef + date.toString("yyMMdd") +"_" + dateTime.toUTC().toString("hhmmss") + ".txt";
                 dataWriter->enableHeader(headerEnabled);
                 dataWriter->openFile(namef);
                 isWriting = true;

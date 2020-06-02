@@ -6,7 +6,7 @@ Datawriter::Datawriter()
 {
     QDateTime dateTime = QDateTime::currentDateTime();
     QDate date = dateTime.date();
-    header = "Simple Serial Plotter v0.4\n";
+    header = "Simple Serial Plotter v0.5\n";
     header = header + date.toString("dddd, d MMMM yyyy") + ", " + dateTime.toUTC().toString("hh:mm:ss") +"\n\n";
 }
 
