@@ -16,7 +16,6 @@ void Porthandler::process(){
         if(port.bytesAvailable()>0){
             if(port.canReadLine()){
                 int lineLength = port.readLine(buf, 1024);
-                //qDebug() << "Read Line <" << buf << "> with size"<<lineLength;
                 QByteArray input(buf);
                 QList<QByteArray> sep = input.split(' ');
                 if(firstLineSkipped){
